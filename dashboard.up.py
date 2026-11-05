@@ -1,47 +1,47 @@
 import streamlit as st
 import pandas as pd
 
-st.title("Sewanee Recycling Dashboard")
-st.write("Tracking recycling and contamination across campus")
+st.set_page_config(page_title="Sewanee Recycling Dashboard")
 
-uploaded_file = st.file_uploader(
-    "Upload recycling data",
-    type="csv"
+st.title("♻️ Sewanee Recycling Dashboard")
+st.write("Tracking recycling performance across campus")
+
+# Load recycling data automatically
+df = pd.read_csv("recycling_data.csv")
+
+# Calculate contamination rates
+df["Contamination_Rate"] = (
+    df["Contaminated_Weight"] / df["Total_Weight"] * 100
 )
 
-if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file)
+# Calculate campus totals
+total_weight = df["Total_Weight"].sum()
+contaminated_weight = df["Contaminated_Weight"].sum()
+aluminum_weight = df["Aluminum_Weight"].sum()
 
-    df["Contamination_Rate"] = (
-        df["Contaminated_Weight"] / df["Total_Weight"] * 100
-    )
+st.subheader("Campus Recycling Statistics")
 
-    total_weight = df["Total_Weight"].sum()
-    total_contamination = df["Contaminated_Weight"].sum()
-    total_aluminum = df["Aluminum_Weight"].sum()
+col1, col2, col3 = st.columns(3)
 
-    st.subheader("Campus Recycling Statistics")
+col1.metric("Total Audited", f"{total_weight} lbs")
+col2.metric(
+    "Contamination Rate",
+    f"{contaminated_weight / total_weight * 100:.1f}%"
+)
+col3.metric("Aluminum Collected", f"{aluminum_weight} lbs")
 
-    col1, col2, col3 = st.columns(3)
+st.subheader("Contamination by Organization")
 
-    col1.metric("Total Recycled", f"{total_weight} lbs")
-    col2.metric(
-        "Contamination Rate",
-        f"{total_contamination / total_weight * 100:.1f}%"
-    )
-    col3.metric("Aluminum Collected", f"{total_aluminum} lbs")
+st.bar_chart(
+    df.set_index("Organization")["Contamination_Rate"]
+)
 
-    st.subheader("Contamination by Organization")
+st.subheader("Organization Rankings")
 
-    st.bar_chart(
-        df.set_index("Organization")["Contamination_Rate"]
-    )
+rankings = df.sort_values("Contamination_Rate")
+st.dataframe(rankings, hide_index=True)
 
-    st.subheader("Organization Rankings")
+st.subheader("Raw Recycling Data")
+st.dataframe(df, hide_index=True)
 
-    rankings = df.sort_values("Contamination_Rate")
-
-    st.dataframe(rankings)
-
-    st.subheader("Raw Recycling Data")
-    st.dataframe(df)
+st.caption("Demonstration data — not actual Sewanee measurements.")
